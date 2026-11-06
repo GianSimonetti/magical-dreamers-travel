@@ -1,0 +1,41 @@
+# Internal migration material and backups
+respaldos/
+sanity-migration/
+deploy-siteground/
+SANITY_INTEGRACION_V2.md
+
+# Unused source images and original review captures
+assets/reseñas/
+assets/grupo-magical-3.webp
+assets/grupo-magical-4.jpg
+assets/imgGrupo1.JPG
+assets/imgGrupo2.JPG
+assets/imgGrupo3.jpg
+
+# Environment variables, tokens and credentials
+.env
+.env.*
+!.env.example
+*.token
+*.tokens
+credentials/
+credentials.*
+secrets/
+secrets.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local tooling and generated files
+node_modules/
+*.log
+*.tmp
+*.temp
+.cache/
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
