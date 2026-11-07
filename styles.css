@@ -800,6 +800,8 @@ body.has-open-review { overflow:hidden; }
 .form-success { margin-top:20px; padding:16px 18px; color:#28523c; background:#edf9f2; border:1px solid #bfe4cd; border-radius:14px; }
 .form-success strong,.form-success span { display:block; }
 .form-success span { margin-top:2px; font-size:11px; }
+.h-captcha { margin:14px 0; }
+.captcha-error { margin:0 0 14px; color:#b3261e; font-size:12px; }
 .career-form--extended .form-nav { margin-top:30px; }
 
 @media (max-width:1024px) {

@@ -131,6 +131,34 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  // Clave pública de Web3Forms: identifica el formulario y no da acceso a la cuenta.
+  const web3formsAccessKey = 'eeff3da8-1bd0-4aba-93c7-436b87d0fe8e';
+  const isCaptchaPending = form => {
+    const captcha = form.querySelector('[name="h-captcha-response"]');
+    const pending = Boolean(captcha && !captcha.value);
+    const error = form.querySelector('.captcha-error');
+    if (error) error.hidden = !pending;
+    return pending;
+  };
+  const sendEmail = (form, subject, message) => {
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+      body: JSON.stringify({
+        access_key: web3formsAccessKey,
+        subject,
+        from_name: 'Sitio web Magical Dreamers',
+        email: form.elements.email?.value,
+        message,
+        'h-captcha-response': form.querySelector('[name="h-captcha-response"]')?.value
+      }),
+      keepalive: true // para que el envío siga aunque la persona salga a WhatsApp
+    })
+      .then(response => { if (!response.ok) console.warn(`Web3Forms respondió ${response.status}`); })
+      .catch(error => console.warn('No se pudo enviar el mail.', error));
+    window.hcaptcha?.reset();
+  };
+
   document.querySelectorAll('.offer-card .whatsapp-action').forEach(action => {
     action.classList.remove('whatsapp-action');
     action.classList.add('offer-card__cta');
@@ -157,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#quote-form')?.addEventListener('submit', event => {
     event.preventDefault();
     const form = event.currentTarget;
-    if (!form.reportValidity()) return;
+    if (!form.reportValidity() || isCaptchaPending(form)) return;
     const data = new FormData(form);
     const message = [
       'Hola Magical Dreamers, quisiera solicitar una cotización.',
@@ -171,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `Detalles: ${data.get('message') || 'Sin detalles adicionales'}`
     ].join('\n');
     document.querySelector('#form-success')?.classList.add('is-visible');
+    sendEmail(form, `Nueva cotización: ${data.get('name')}`, message);
     openWhatsApp(message);
   });
 
@@ -440,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
     careerForm.querySelectorAll('.form-prev').forEach(button => button.addEventListener('click', () => showStep(Math.max(activeStep - 1, 0))));
     careerForm.addEventListener('submit', event => {
       event.preventDefault();
-      if (!careerForm.reportValidity()) return;
+      if (!careerForm.reportValidity() || isCaptchaPending(careerForm)) return;
       const data = new FormData(careerForm);
       const professionalExperience = data.getAll('professionalExperience').join(', ') || '-';
       const message = [
@@ -494,6 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ].join('\n');
       const success = careerForm.querySelector('#career-success');
       if (success) success.hidden = false;
+      sendEmail(careerForm, `Nueva postulación: ${data.get('name')}`, message);
       openWhatsApp(message);
     });
 
