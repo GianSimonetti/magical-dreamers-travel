@@ -689,7 +689,7 @@ body.has-open-review { overflow:hidden; }
 /* Production identity and legal pages */
 .nav-cta,.btn--primary { background:linear-gradient(135deg,var(--pink),#a53b7b); }
 .btn--gold { background:linear-gradient(135deg,#d8c177,var(--gold)); }
-.eyebrow,.promo-tag,.offer-card__body small,.agent-card span,.agent-mini span { color:var(--pink); }
+.eyebrow,.offer-card__body small,.agent-card span,.agent-mini span { color:var(--pink); }
 .promo-card--small { background:linear-gradient(145deg,var(--pink),#963f79); }
 .team-values,.whatsapp-cta__card { background:linear-gradient(115deg,var(--navy),#4a2c61 65%,var(--purple)); }
 .process-step:nth-child(2) .step-icon { background:linear-gradient(145deg,var(--purple),#684378); }
