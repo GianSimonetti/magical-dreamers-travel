@@ -802,6 +802,11 @@ body.has-open-review { overflow:hidden; }
 .form-success span { margin-top:2px; font-size:11px; }
 .h-captcha { margin:14px 0; }
 .captcha-error { margin:0 0 14px; color:#b3261e; font-size:12px; }
+.email-status { margin:14px 0 0; padding:12px 14px; border-radius:12px; font-size:12px; line-height:1.5; }
+.email-status--sending { color:#5c4b20; background:#fff8dc; border:1px solid #ead995; }
+.email-status--success { color:#28523c; background:#edf9f2; border:1px solid #bfe4cd; }
+.email-status--error { color:#7d2e2e; background:#fff1f1; border:1px solid #efc3c3; }
+.quote-form button:disabled,.career-form button:disabled { cursor:wait; opacity:.65; }
 .career-form--extended .form-nav { margin-top:30px; }
 
 @media (max-width:1024px) {

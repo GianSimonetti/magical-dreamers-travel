@@ -38,6 +38,15 @@ También se puede utilizar una extensión como Live Server, configurándola para
 
 Los listados muestran estados diferenciados durante la carga, cuando no hay registros activos y cuando la API no está disponible.
 
+## Formularios de contacto
+
+Las cotizaciones y postulaciones utilizan dos canales independientes:
+
+- Web3Forms envía una copia por correo electrónico.
+- WhatsApp abre el mensaje preparado para que la persona lo envíe al equipo.
+
+Los formularios incluyen hCaptcha. Antes de publicar, se debe confirmar en Web3Forms el correo destinatario y verificar que hCaptcha esté activado para la Access Key utilizada. La Access Key es pública por diseño; no se deben agregar al frontend contraseñas ni claves administrativas.
+
 ## Estructura pública
 
 ```text

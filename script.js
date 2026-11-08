@@ -133,30 +133,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Clave pública de Web3Forms: identifica el formulario y no da acceso a la cuenta.
   const web3formsAccessKey = 'eeff3da8-1bd0-4aba-93c7-436b87d0fe8e';
-  const isCaptchaPending = form => {
+  const getCaptchaToken = form => {
     const captcha = form.querySelector('[name="h-captcha-response"]');
-    const pending = Boolean(captcha && !captcha.value);
     const error = form.querySelector('.captcha-error');
-    if (error) error.hidden = !pending;
-    return pending;
+    const token = captcha?.value?.trim() || '';
+    if (error) {
+      error.textContent = captcha
+        ? 'Completa la verificación para continuar.'
+        : 'No fue posible cargar la verificación. Recarga la página e inténtalo nuevamente.';
+      error.hidden = Boolean(token);
+    }
+    return token;
   };
-  const sendEmail = (form, subject, message) => {
-    fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', Accept: 'application/json'},
-      body: JSON.stringify({
-        access_key: web3formsAccessKey,
-        subject,
-        from_name: 'Sitio web Magical Dreamers',
-        email: form.elements.email?.value,
-        message,
-        'h-captcha-response': form.querySelector('[name="h-captcha-response"]')?.value
-      }),
-      keepalive: true // para que el envío siga aunque la persona salga a WhatsApp
-    })
-      .then(response => { if (!response.ok) console.warn(`Web3Forms respondió ${response.status}`); })
-      .catch(error => console.warn('No se pudo enviar el mail.', error));
-    window.hcaptcha?.reset();
+  const setEmailStatus = (form, state, message) => {
+    const status = form.querySelector('.email-status');
+    if (!status) return;
+    status.hidden = false;
+    status.className = `email-status email-status--${state}`;
+    status.textContent = message;
+  };
+  const sendEmail = async (form, subject, message, captchaToken) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+        body: JSON.stringify({
+          access_key: web3formsAccessKey,
+          subject,
+          from_name: 'Sitio web Magical Dreamers',
+          email: form.elements.email?.value,
+          message,
+          'h-captcha-response': captchaToken
+        }),
+        keepalive: true,
+        signal: controller.signal
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || `Web3Forms respondió ${response.status}`);
+      }
+      return result;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  };
+  const sendThroughIndependentChannels = ({form, subject, message, showWhatsAppStatus}) => {
+    const captchaToken = getCaptchaToken(form);
+    if (!captchaToken) return;
+
+    // WhatsApp se abre inmediatamente y no espera el resultado del correo.
+    showWhatsAppStatus();
+    openWhatsApp(message);
+
+    const submitButton = form.querySelector('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    setEmailStatus(form, 'sending', 'Enviando una copia de tu consulta por correo…');
+
+    sendEmail(form, subject, message, captchaToken)
+      .then(() => setEmailStatus(form, 'success', 'La copia por correo fue enviada correctamente.'))
+      .catch(error => {
+        console.warn('No se pudo confirmar el envío por correo.', error);
+        setEmailStatus(form, 'error', 'No pudimos confirmar el correo. Tu consulta por WhatsApp continúa disponible.');
+      })
+      .finally(() => {
+        if (submitButton) submitButton.disabled = false;
+        window.hcaptcha?.reset();
+      });
   };
 
   document.querySelectorAll('.offer-card .whatsapp-action').forEach(action => {
@@ -185,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#quote-form')?.addEventListener('submit', event => {
     event.preventDefault();
     const form = event.currentTarget;
-    if (!form.reportValidity() || isCaptchaPending(form)) return;
+    if (!form.reportValidity()) return;
     const data = new FormData(form);
     const message = [
       'Hola Magical Dreamers, quisiera solicitar una cotización.',
@@ -198,9 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
       `Cantidad de viajeros: ${data.get('travelers') || 'A definir'}`,
       `Detalles: ${data.get('message') || 'Sin detalles adicionales'}`
     ].join('\n');
-    document.querySelector('#form-success')?.classList.add('is-visible');
-    sendEmail(form, `Nueva cotización: ${data.get('name')}`, message);
-    openWhatsApp(message);
+    sendThroughIndependentChannels({
+      form,
+      subject: `Nueva cotización: ${data.get('name')}`,
+      message,
+      showWhatsAppStatus: () => document.querySelector('#form-success')?.classList.add('is-visible')
+    });
   });
 
   const filterButtons = [...document.querySelectorAll('.promo-filter button')];
@@ -469,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     careerForm.querySelectorAll('.form-prev').forEach(button => button.addEventListener('click', () => showStep(Math.max(activeStep - 1, 0))));
     careerForm.addEventListener('submit', event => {
       event.preventDefault();
-      if (!careerForm.reportValidity() || isCaptchaPending(careerForm)) return;
+      if (!careerForm.reportValidity()) return;
       const data = new FormData(careerForm);
       const professionalExperience = data.getAll('professionalExperience').join(', ') || '-';
       const message = [
@@ -521,10 +568,15 @@ document.addEventListener('DOMContentLoaded', () => {
         '',
         'Declaraciones del modelo de trabajo y política de privacidad: aceptadas.'
       ].join('\n');
-      const success = careerForm.querySelector('#career-success');
-      if (success) success.hidden = false;
-      sendEmail(careerForm, `Nueva postulación: ${data.get('name')}`, message);
-      openWhatsApp(message);
+      sendThroughIndependentChannels({
+        form: careerForm,
+        subject: `Nueva postulación: ${data.get('name')}`,
+        message,
+        showWhatsAppStatus: () => {
+          const success = careerForm.querySelector('#career-success');
+          if (success) success.hidden = false;
+        }
+      });
     });
 
     updateConditionalFields();
