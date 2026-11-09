@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Clave pública de Web3Forms: identifica el formulario y no da acceso a la cuenta.
-  const web3formsAccessKey = 'eeff3da8-1bd0-4aba-93c7-436b87d0fe8e';
+  const web3formsAccessKey = 'fdc3a5fa-634e-4da4-bf1b-f09e9d2e02cd';
   const getCaptchaToken = form => {
     const captcha = form.querySelector('[name="h-captcha-response"]');
     const error = form.querySelector('.captcha-error');
